@@ -1,0 +1,21 @@
+{
+  "name": "yolo-etl-env",
+  "image": "mcr.microsoft.com/devcontainers/python:3.10",
+
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  }
+}
