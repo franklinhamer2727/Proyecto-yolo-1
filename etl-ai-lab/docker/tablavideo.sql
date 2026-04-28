@@ -1,0 +1,36 @@
+CREATE EXTERNAL TABLE IF NOT EXISTS video_detections (
+  source_type         STRING  COMMENT 'tipo de fuente: video, image, etc.',
+  source_id           STRING  COMMENT 'nombre del archivo origen',
+  frame_number        INT     COMMENT 'numero de frame dentro del video',
+  run_id              STRING  COMMENT 'ID de ejecucion del pipeline',
+  detection_id        STRING  COMMENT 'hash unico de la deteccion',
+  class_id            INT     COMMENT 'ID numerico de la clase YOLO',
+  class_name          STRING  COMMENT 'nombre legible de la clase detectada',
+  confidence          DOUBLE  COMMENT 'score de confianza entre 0.0 y 1.0',
+  x_min               INT     COMMENT 'coordenada x minima del bounding box',
+  y_min               INT     COMMENT 'coordenada y minima del bounding box',
+  x_max               INT     COMMENT 'coordenada x maxima del bounding box',
+  y_max               INT     COMMENT 'coordenada y maxima del bounding box',
+  width               INT     COMMENT 'ancho del bounding box en pixeles',
+  height              INT     COMMENT 'alto del bounding box en pixeles',
+  area_pixels         INT     COMMENT 'area del bounding box en pixeles',
+  frame_width         INT     COMMENT 'ancho total del frame',
+  frame_height        INT     COMMENT 'alto total del frame',
+  bbox_area_ratio     DOUBLE  COMMENT 'ratio area bbox sobre area total del frame',
+  center_x            DOUBLE  COMMENT 'centro x del bbox en pixeles',
+  center_y            DOUBLE  COMMENT 'centro y del bbox en pixeles',
+  center_x_norm       DOUBLE  COMMENT 'centro x normalizado entre 0.0 y 1.0',
+  center_y_norm       DOUBLE  COMMENT 'centro y normalizado entre 0.0 y 1.0',
+  position_region     STRING  COMMENT 'region espacial: bottom-center, top-left, etc.',
+  dominant_color_name STRING  COMMENT 'nombre del color dominante del objeto',
+  dom_r               INT     COMMENT 'canal rojo del color dominante 0-255',
+  dom_g               INT     COMMENT 'canal verde del color dominante 0-255',
+  dom_b               INT     COMMENT 'canal azul del color dominante 0-255',
+  timestamp_sec       DOUBLE  COMMENT 'segundo dentro del video',
+  window_10s          INT     COMMENT 'indice de ventana de 10 segundos',
+  ingestion_date      TIMESTAMP COMMENT 'fecha y hora de ingesta ISO-8601',
+  source_file         STRING  COMMENT 'ruta del archivo fuente original'
+)
+STORED AS PARQUET
+LOCATION '/data/video_detections/'
+TBLPROPERTIES ("parquet.compression"="SNAPPY");

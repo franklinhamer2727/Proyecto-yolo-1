@@ -1,0 +1,1 @@
+source_type,source_id,frame_number,class_id,class_name,confidence,x_min,y_min,x_max,y_max,width,height,area_pixels,frame_width,frame_height,bbox_area_ratio,center_x,center_y,center_x_norm,center_y_norm,position_region,dominant_color_name,dom_r,dom_g,dom_b,timestamp_sec,ingestion_date,detection_id,run_id

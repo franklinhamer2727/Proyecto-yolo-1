@@ -1,0 +1,133 @@
+version: "3"
+
+networks:
+  hive_net:
+    driver: bridge
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    volumes:
+      - namenode:/hadoop/dfs/name
+      - ./data:/data
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop-hive.env
+    ports:
+      - "50070:50070"
+    networks:
+      - hive_net
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    volumes:
+      - datanode:/hadoop/dfs/data
+      - ./data:/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070"
+    networks:
+      - hive_net
+
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop2.7.4-java8
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075"
+    env_file:
+      - ./hadoop-hive.env
+    networks:
+      - hive_net
+
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+    volumes:
+      - ./data:/data
+    networks:
+      - hive_net
+
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    env_file:
+      - ./hadoop-hive.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432 resourcemanager:8088"
+    ports:
+      - "9083:9083"
+    volumes:
+      - ./data:/data
+    networks:
+      - hive_net
+
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    ports:
+      - "5433:5432"
+    networks:
+      - hive_net
+
+  huedb:
+    image: postgres:12.1-alpine
+    volumes:
+      - pg_data:/var/lib/postgresql/data/
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432 resourcemanager:8088 hive-metastore:9083"
+    networks:
+      - hive_net
+
+  hue:
+    image: gethue/hue:4.6.0
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432 resourcemanager:8088 hive-metastore:9083 huedb:5432"
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./hue-overrides.ini:/usr/share/hue/desktop/conf/hue-overrides.ini
+    links:
+      - huedb
+    networks:
+      - hive_net
+
+  system2:
+    build:
+      context: ..
+      dockerfile: docker/system2/Dockerfile
+    container_name: system2
+    volumes:
+      - ../src/system1_classifier/data/staging:/app/data
+      - ../src/system2_batch_etl:/app/system2_batch_etl
+      - ../sql:/app/sql
+    environment:
+      - STAGING_DIR=/app/data
+      - SQL_DIR=/app/sql
+      - HDFS_HOST=namenode
+      - HDFS_WEBHDFS_PORT=50070
+      - HDFS_URL=hdfs://namenode:8020
+      - HIVE_HOST=hive-server
+      - HIVE_PORT=10000
+      - HDFS_PATH=/projects/yolo_objects/hive/
+      - OUTPUT_PARQUET=/app/data/output.parquet
+    depends_on:
+      - hive-server
+      - hive-metastore
+      - namenode
+      - datanode
+    restart: on-failure
+    networks:
+      - hive_net
+
+volumes:
+  namenode:
+  datanode:
+  pg_data:
